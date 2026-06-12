@@ -26,7 +26,7 @@ ADMINS = [5814450434]
 # WAITING LISTS
 # ==========================================
 
-WAITING_FEEDBACK = []
+WAITING_FEEDBACK = set()
 
 # ==========================================
 # BOT
@@ -2298,14 +2298,12 @@ def receive_admin_message(message):
     )
 
 # ==========================================
-# FEEDBACK BUTTON
+# FEEDBACK START
 # ==========================================
-
 @bot.message_handler(func=lambda m: m.text == "📝 Feedback")
 def feedback_start(message):
 
-    if message.chat.id not in WAITING_FEEDBACK:
-        WAITING_FEEDBACK.append(message.chat.id)
+    WAITING_FEEDBACK.add(message.chat.id)
 
     bot.send_message(
         message.chat.id,
@@ -2322,92 +2320,41 @@ Your feedback will be sent directly to the admin.
 """
     )
 
-# ==========================================
-# FEEDBACK TEXT
-# ==========================================
-
-@bot.message_handler(
-    func=lambda m: m.chat.id in WAITING_FEEDBACK,
-    content_types=['text']
-)
-def feedback_text(message):
-
-    WAITING_FEEDBACK.remove(message.chat.id)
-
-    username = (
-        f"@{message.from_user.username}"
-        if message.from_user.username
-        else "No Username"
-    )
-
-    bot.send_message(
-        OWNER_ID,
-        f"""
-📝 NEW FEEDBACK
-
-👤 USER ID:
-{message.from_user.id}
-
-🔰 USERNAME:
-{username}
-
-📄 FEEDBACK:
-
-{message.text}
-"""
-    )
-
-    bot.send_message(
-        message.chat.id,
-        "✅ Thank you for your feedback."
-    )
 
 # ==========================================
-# FEEDBACK PHOTO
+# HANDLE TEXT + PHOTO FEEDBACK
 # ==========================================
+@bot.message_handler(content_types=["text", "photo"])
+def receive_feedback(message):
 
-@bot.message_handler(
-    func=lambda m: m.chat.id in WAITING_FEEDBACK,
-    content_types=['photo']
-)
-def feedback_photo(message):
+    if message.chat.id not in WAITING_FEEDBACK:
+        return
 
-    WAITING_FEEDBACK.remove(message.chat.id)
+    user_id = message.chat.id
 
-    username = (
-        f"@{message.from_user.username}"
-        if message.from_user.username
-        else "No Username"
-    )
+    # TEXT FEEDBACK
+    if message.content_type == "text":
+        bot.send_message(
+            ADMIN_CHAT_ID,
+            f"📝 NEW FEEDBACK\n\nFrom: {user_id}\n\n{message.text}"
+        )
 
-    caption = (
-        message.caption
-        if message.caption
-        else "No feedback text provided."
-    )
+        bot.send_message(user_id, "✅ Thank you for your feedback!")
 
-    bot.send_photo(
-        OWNER_ID,
-        message.photo[-1].file_id,
-        caption=f"""
-📝 NEW FEEDBACK
+    # PHOTO FEEDBACK
+    elif message.content_type == "photo":
+        caption = message.caption if message.caption else "No caption"
 
-👤 USER ID:
-{message.from_user.id}
+        bot.send_photo(
+            ADMIN_CHAT_ID,
+            message.photo[-1].file_id,
+            caption=f"📝 NEW FEEDBACK\n\nFrom: {user_id}\n\n{caption}"
+        )
 
-🔰 USERNAME:
-{username}
+        bot.send_message(user_id, "✅ Screenshot received. Thank you!")
 
-📄 FEEDBACK:
-
-{caption}
-"""
-    )
-
-    bot.send_message(
-        message.chat.id,
-        "✅ Thank you for your feedback."
-    )
+    # REMOVE FROM WAITING LIST
+    WAITING_FEEDBACK.discard(user_id)
         
 # ==========================================
 # BOT START
