@@ -2063,46 +2063,33 @@ def buttons(message):
     if message.chat.id in WAITING_FEEDBACK:
         return
 
-    text = message.text.strip()
+    text = message.text.strip() if message.text else ""
 
     if not has_access(message.chat.id):
 
-        bot.send_message(
-            message.chat.id,
-            "REDEEM A KEY FIRST"
-        )
-
+        bot.send_message(message.chat.id, "REDEEM A KEY FIRST")
         return
+
 
     # =========================
     # SPAM SHARE
     # =========================
     if text == "1 - Spam Share":
 
-        msg = bot.send_message(
-            message.chat.id,
-            "SEND POST LINK"
-        )
+        msg = bot.send_message(message.chat.id, "SEND POST LINK")
+        bot.register_next_step_handler(msg, get_share_link)
+        return
 
-        bot.register_next_step_handler(
-            msg,
-            get_share_link
-        )
 
     # =========================
     # AUTO CREATE
     # =========================
     elif text == "2 - Auto Create":
 
-        msg = bot.send_message(
-            message.chat.id,
-            "HOW MANY ACCOUNTS?"
-        )
+        msg = bot.send_message(message.chat.id, "HOW MANY ACCOUNTS?")
+        bot.register_next_step_handler(msg, auto_create)
+        return
 
-        bot.register_next_step_handler(
-            msg,
-            auto_create
-        )
 
     # =========================
     # CRACKING
@@ -2111,40 +2098,30 @@ def buttons(message):
 
         msg = bot.send_message(
             message.chat.id,
-            """
- FIRST UPLOAD YOUR TXT FILE
-
-CLICK:
- Upload File
-
-AFTER THE FILE IS SAVED,
-COPY THE PATH SENT BY THE BOT
-
-AND SEND IT HERE
-            """
+            "UPLOAD FILE FIRST THEN SEND PATH"
         )
 
-        bot.register_next_step_handler(
-            msg,
-            crack_tool
-        )
+        bot.register_next_step_handler(msg, crack_tool)
+        return
+
 
     # =========================
     # UPLOAD FILE
     # =========================
-    elif text == " Upload File":
+    elif text == "📁 Upload File":
 
-        bot.send_message(
-            message.chat.id,
-            " SEND YOUR TXT FILE NOW"
-        )
+        bot.send_message(message.chat.id, "SEND YOUR TXT FILE NOW")
+        return
+
 
     # =========================
-    # ACCOUNT
+    # MY ACCOUNT
     # =========================
-    elif text == " My Account":
+    elif text == "👤 My Account":
 
         my_account(message)
+        return
+
 
     # =========================
     # STATUS
@@ -2152,20 +2129,36 @@ AND SEND IT HERE
     elif text == "⚙️ Status":
 
         status(message)
+        return
+
 
     # =========================
-    # MESSAGE ADMIN
+    # MESSAGE ADMIN (FIXED - NO CALL FUNCTION)
     # =========================
     elif text == "✉️ Message Admin":
 
-        message_admin(message)
+        msg = bot.send_message(
+            message.chat.id,
+            "✉️ MESSAGE ADMIN\n\nSend your message now."
+        )
+
+        bot.register_next_step_handler(msg, receive_admin_message)
+        return
+
 
     # =========================
-    # FEEDBACK
+    # FEEDBACK (FIXED - NO CALL FUNCTION)
     # =========================
     elif text == "📝 Feedback":
 
-        feedback_start(message)
+        WAITING_FEEDBACK.add(message.chat.id)
+
+        bot.send_message(
+            message.chat.id,
+            "📝 FEEDBACK\n\nSend:\n- Text\n- Screenshot + Caption"
+        )
+        return
+
 
     # =========================
     # STOP
@@ -2173,13 +2166,12 @@ AND SEND IT HERE
     elif text == "/stop":
 
         stop(message)
+        return
+
 
     else:
 
-        bot.send_message(
-            message.chat.id,
-            "PRESS /start"
-        )
+        bot.send_message(message.chat.id, "PRESS /start")
 
 # ==========================================
 # FILE UPLOAD HANDLER
@@ -2249,24 +2241,6 @@ THEN SEND THIS PATH:
 # MESSAGE ADMIN
 # ==========================================
 
-@bot.message_handler(func=lambda m: m.text == "✉️ Message Admin")
-def message_admin(message):
-
-    msg = bot.send_message(
-        message.chat.id,
-        """
-✉️ MESSAGE ADMIN
-
-Send your message now.
-"""
-    )
-
-    bot.register_next_step_handler(
-        msg,
-        receive_admin_message
-    )
-
-
 def receive_admin_message(message):
 
     username = (
@@ -2275,27 +2249,23 @@ def receive_admin_message(message):
         else "No Username"
     )
 
+    text = message.text if message.text else "Non-text message"
+
     bot.send_message(
         OWNER_ID,
         f"""
 📩 NEW MESSAGE
 
-👤 USER ID:
-{message.from_user.id}
+👤 USER ID: {message.from_user.id}
 
-🔰 USERNAME:
-{username}
+🔰 USERNAME: {username}
 
 📝 MESSAGE:
-
-{message.text}
+{text}
 """
     )
 
-    bot.send_message(
-        message.chat.id,
-        "✅ Message sent to admin."
-    )
+    bot.send_message(message.chat.id, "✅ Message sent to admin.")
 
 # ==========================================
 # FEEDBACK START
@@ -2320,6 +2290,7 @@ Your feedback will be sent directly to the admin.
 """
     )
 
+
 # ==========================================
 # HANDLE TEXT + PHOTO FEEDBACK
 # ==========================================
@@ -2331,28 +2302,27 @@ def receive_feedback(message):
 
     user_id = message.chat.id
 
-    # TEXT FEEDBACK
     if message.content_type == "text":
+
         bot.send_message(
             ADMIN_CHAT_ID,
-            f"📝 NEW FEEDBACK\n\nFrom: {user_id}\n\n{message.text}"
+            f"📝 FEEDBACK\n\nFrom: {user_id}\n\n{message.text}"
         )
 
-        bot.send_message(user_id, "✅ Thank you for your feedback!")
+        bot.send_message(user_id, "✅ Thank you!")
 
-    # PHOTO FEEDBACK
     elif message.content_type == "photo":
+
         caption = message.caption if message.caption else "No caption"
 
         bot.send_photo(
             ADMIN_CHAT_ID,
             message.photo[-1].file_id,
-            caption=f"📝 NEW FEEDBACK\n\nFrom: {user_id}\n\n{caption}"
+            caption=f"📝 FEEDBACK\n\nFrom: {user_id}\n\n{caption}"
         )
 
-        bot.send_message(user_id, "✅ Screenshot received. Thank you!")
+        bot.send_message(user_id, "✅ Screenshot received!")
 
-    # REMOVE FROM WAITING LIST
     WAITING_FEEDBACK.discard(user_id)
         
 # ==========================================
