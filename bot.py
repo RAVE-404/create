@@ -2146,21 +2146,22 @@ AND SEND IT HERE
     # =========================
     # STATUS
     # =========================
-    elif text == " Status":
+    elif text == "⚙️ Status":
 
         status(message)
-        
-     # =========================
-     # MESSAGE ADMIN
-     # =========================
-     elif text == "✉️ Message Admin":
-        message_admin(message)   
 
-     # =========================
-     # FEEDBACK
-     # =========================
-     elif text == "📝 Feedback":
-     	
+    # =========================
+    # MESSAGE ADMIN
+    # =========================
+    elif text == "✉️ Message Admin":
+
+        message_admin(message)
+
+    # =========================
+    # FEEDBACK
+    # =========================
+    elif text == "📝 Feedback":
+
         feedback_start(message)
 
     # =========================
