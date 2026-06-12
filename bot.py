@@ -2055,15 +2055,18 @@ def stop(message):
     )
 
 # ==========================================
-# BUTTONS
+# BUTTONS (MAIN ROUTER - FIXED)
 # ==========================================
 @bot.message_handler(func=lambda message: True)
 def buttons(message):
 
-    if message.chat.id in WAITING_FEEDBACK:
+    if not message.text:
         return
 
-    text = message.text.strip() if message.text else ""
+    text = message.text.strip()
+
+    if message.chat.id in WAITING_FEEDBACK:
+        return
 
     if not has_access(message.chat.id):
 
@@ -2096,11 +2099,7 @@ def buttons(message):
     # =========================
     elif text == "3 - Cracking":
 
-        msg = bot.send_message(
-            message.chat.id,
-            "UPLOAD FILE FIRST THEN SEND PATH"
-        )
-
+        msg = bot.send_message(message.chat.id, "UPLOAD FILE THEN SEND PATH")
         bot.register_next_step_handler(msg, crack_tool)
         return
 
@@ -2133,7 +2132,7 @@ def buttons(message):
 
 
     # =========================
-    # MESSAGE ADMIN (FIXED - NO CALL FUNCTION)
+    # MESSAGE ADMIN
     # =========================
     elif text == "✉️ Message Admin":
 
@@ -2147,7 +2146,7 @@ def buttons(message):
 
 
     # =========================
-    # FEEDBACK (FIXED - NO CALL FUNCTION)
+    # FEEDBACK
     # =========================
     elif text == "📝 Feedback":
 
@@ -2238,9 +2237,8 @@ THEN SEND THIS PATH:
         )
         
 # ==========================================
-# MESSAGE ADMIN
+# MESSAGE ADMIN RECEIVER (SAFE)
 # ==========================================
-
 def receive_admin_message(message):
 
     username = (
@@ -2267,38 +2265,12 @@ def receive_admin_message(message):
 
     bot.send_message(message.chat.id, "✅ Message sent to admin.")
 
-# ==========================================
-# FEEDBACK START
-# ==========================================
-@bot.message_handler(func=lambda m: m.text == "📝 Feedback")
-def feedback_start(message):
-
-    WAITING_FEEDBACK.add(message.chat.id)
-
-    bot.send_message(
-        message.chat.id,
-        """
-📝 FEEDBACK
-
-Send:
-
-- Text feedback
-OR
-- Screenshot + Caption
-
-Your feedback will be sent directly to the admin.
-"""
-    )
-
 
 # ==========================================
-# HANDLE TEXT + PHOTO FEEDBACK
+# FEEDBACK RECEIVER (ONLY WHEN WAITING)
 # ==========================================
-@bot.message_handler(content_types=["text", "photo"])
+@bot.message_handler(func=lambda m: m.chat.id in WAITING_FEEDBACK)
 def receive_feedback(message):
-
-    if message.chat.id not in WAITING_FEEDBACK:
-        return
 
     user_id = message.chat.id
 
@@ -2306,10 +2278,17 @@ def receive_feedback(message):
 
         bot.send_message(
             ADMIN_CHAT_ID,
-            f"📝 FEEDBACK\n\nFrom: {user_id}\n\n{message.text}"
+            f"""
+📝 FEEDBACK
+
+👤 From: {user_id}
+
+📩 Message:
+{message.text}
+"""
         )
 
-        bot.send_message(user_id, "✅ Thank you!")
+        bot.send_message(user_id, "✅ Thank you for your feedback!")
 
     elif message.content_type == "photo":
 
@@ -2318,7 +2297,14 @@ def receive_feedback(message):
         bot.send_photo(
             ADMIN_CHAT_ID,
             message.photo[-1].file_id,
-            caption=f"📝 FEEDBACK\n\nFrom: {user_id}\n\n{caption}"
+            caption=f"""
+📝 FEEDBACK
+
+👤 From: {user_id}
+
+📩 Caption:
+{caption}
+"""
         )
 
         bot.send_message(user_id, "✅ Screenshot received!")
