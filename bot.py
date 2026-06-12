@@ -2308,7 +2308,7 @@ def receive_admin_message(message):
 # FEEDBACK BUTTON
 # ==========================================
 
-@bot.message_handler(func=lambda m: m.text == "📝 Feedback")
+@bot.message_handler(func=lambda m: m.text == "Feedback")
 def feedback_start(message):
 
     if message.chat.id not in WAITING_FEEDBACK:
@@ -2317,13 +2317,13 @@ def feedback_start(message):
     bot.send_message(
         message.chat.id,
         """
-📝 FEEDBACK
+FEEDBACK
 
 Send:
 
-• Text feedback
+- Text feedback
 OR
-• Screenshot + Caption
+- Screenshot + Caption
 
 Your feedback will be sent directly to the admin.
 """
