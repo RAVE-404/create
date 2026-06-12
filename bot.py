@@ -2312,14 +2312,13 @@ def feedback_start(message):
 
 Send:
 
-• Text feedback
+- Text feedback
 OR
-• Screenshot + Caption
+- Screenshot + Caption
 
 Your feedback will be sent directly to the admin.
 """
     )
-
 
 # ==========================================
 # HANDLE TEXT + PHOTO FEEDBACK
