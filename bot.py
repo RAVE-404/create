@@ -2060,6 +2060,9 @@ def stop(message):
 @bot.message_handler(func=lambda message: True)
 def buttons(message):
 
+    if message.chat.id in WAITING_FEEDBACK:
+        return
+
     text = message.text.strip()
 
     if not has_access(message.chat.id):
@@ -2293,38 +2296,6 @@ def receive_admin_message(message):
         message.chat.id,
         "✅ Message sent to admin."
     )
-# ==========================================
-# RECEIVE MESSAGE ADMIN
-# ==========================================
-    WAITING_MESSAGE.remove(message.chat.id)
-
-    username = (
-        f"@{message.from_user.username}"
-        if message.from_user.username
-        else "No Username"
-    )
-
-    bot.send_message(
-        OWNER_ID,
-        f"""
-📩 NEW MESSAGE
-
-👤 USER ID:
-{message.from_user.id}
-
-🔰 USERNAME:
-{username}
-
-📝 MESSAGE:
-
-{message.text}
-"""
-    )
-
-    bot.send_message(
-        message.chat.id,
-        "✅ Your message has been sent to the admin."
-    )
 
 # ==========================================
 # FEEDBACK BUTTON
@@ -2339,13 +2310,13 @@ def feedback_start(message):
     bot.send_message(
         message.chat.id,
         """
-FEEDBACK
+📝 FEEDBACK
 
 Send:
 
-- Text feedback
+• Text feedback
 OR
-- Screenshot + Caption
+• Screenshot + Caption
 
 Your feedback will be sent directly to the admin.
 """
