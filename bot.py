@@ -26,7 +26,6 @@ ADMINS = [5814450434]
 # WAITING LISTS
 # ==========================================
 
-WAITING_MESSAGE = []
 WAITING_FEEDBACK = []
 
 # ==========================================
@@ -2244,36 +2243,59 @@ THEN SEND THIS PATH:
         )
         
 # ==========================================
-# MESSAGE ADMIN BUTTON
+# MESSAGE ADMIN
 # ==========================================
 
 @bot.message_handler(func=lambda m: m.text == "✉️ Message Admin")
 def message_admin(message):
 
-    if message.chat.id not in WAITING_MESSAGE:
-        WAITING_MESSAGE.append(message.chat.id)
-
-    bot.send_message(
+    msg = bot.send_message(
         message.chat.id,
         """
 ✉️ MESSAGE ADMIN
 
 Send your message now.
-
-Type anything and it will be forwarded to the admin.
 """
     )
 
+    bot.register_next_step_handler(
+        msg,
+        receive_admin_message
+    )
+
+
+def receive_admin_message(message):
+
+    username = (
+        f"@{message.from_user.username}"
+        if message.from_user.username
+        else "No Username"
+    )
+
+    bot.send_message(
+        OWNER_ID,
+        f"""
+📩 NEW MESSAGE
+
+👤 USER ID:
+{message.from_user.id}
+
+🔰 USERNAME:
+{username}
+
+📝 MESSAGE:
+
+{message.text}
+"""
+    )
+
+    bot.send_message(
+        message.chat.id,
+        "✅ Message sent to admin."
+    )
 # ==========================================
 # RECEIVE MESSAGE ADMIN
 # ==========================================
-
-@bot.message_handler(
-    func=lambda m: m.chat.id in WAITING_MESSAGE,
-    content_types=['text']
-)
-def receive_admin_message(message):
-
     WAITING_MESSAGE.remove(message.chat.id)
 
     username = (
@@ -2308,7 +2330,7 @@ def receive_admin_message(message):
 # FEEDBACK BUTTON
 # ==========================================
 
-@bot.message_handler(func=lambda m: m.text == "Feedback")
+@bot.message_handler(func=lambda m: m.text == "📝 Feedback")
 def feedback_start(message):
 
     if message.chat.id not in WAITING_FEEDBACK:
